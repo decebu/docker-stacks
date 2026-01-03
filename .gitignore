@@ -18,7 +18,7 @@
 
 # Konfigurations- und Log-Dateien
 *.log
-*.bak
+w*.bak
 *.swp
 *.swo
 
@@ -44,3 +44,7 @@ docker-compose.yml.override
 # Unbound Laufzeit-Dateien
 /stacks/unbound/config/root.hints
 /stacks/unbound/config/root.key
+/stacks/unbound/config/unbound.pid
+/stacks/unbound/config/ca-certificates.crt
+/stacks/unbound/config/dev/
+/stacks/unbound/config/var/
