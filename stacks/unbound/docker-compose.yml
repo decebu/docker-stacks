@@ -17,35 +17,10 @@ services:
     image: mvance/unbound:latest
     container_name: unbound
     restart: unless-stopped
-    networks:
-      qnet-static-vlan70:
-        ipv4_address: 192.168.70.6  # Statische IP für Unbound
     ports:
-      - "53:53/tcp"  # DNS über TCP
-      - "53:53/udp"  # DNS über UDP
+      - "53:53/tcp"
+      - "53:53/udp"
     volumes:
-      - unbound-data:/opt/unbound/etc/unbound  # Mount der benutzerdefinierten Konfiguration
+      - ./config:/opt/unbound/etc/unbound
     environment:
-      - TZ=Europe/Berlin  # Zeitzone für den Container
-
-networks:
-  qnet-static-vlan70:
-    name: qnet-static-vlan70  # Das externe Netzwerk, das du bereits erstellt hast
-    external: true
-  #unbound-network:
-  #  driver: bridge
-
-volumes:
-  unbound-data:
-    driver: local
-    driver_opts:
-      type: none
-      device: /share/CE_CACHEDEV1_DATA/Docker_DATA/volumes/unbound_data
-      o: bind
-  
-  redis-data:
-    driver: local
-    driver_opts:
-      type: none
-      device: /share/CE_CACHEDEV1_DATA/Docker_DATA/volumes/redis_data
-      o: bind
+      - TZ=Europe/Berlin

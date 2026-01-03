@@ -24,7 +24,7 @@
 
 # Docker-Volumen und persistent gespeicherte Daten
 /docker-compose.override.yml
-/stacks/*/config/
+#/stacks/*/config/
 /stacks/*/.env
 
 # IDE und Editor spezifische Dateien
@@ -40,3 +40,7 @@ Thumbs.db
 
 # Docker Container und Images (lokal gespeichert)
 docker-compose.yml.override
+
+# Unbound Laufzeit-Dateien
+/stacks/unbound/config/root.hints
+/stacks/unbound/config/root.key
