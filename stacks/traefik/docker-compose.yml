@@ -1,0 +1,39 @@
+services:
+  traefik:
+    image: traefik:latest # Besser, latest zu verwenden für Sicherheitsupdates
+    container_name: traefik
+    restart: unless-stopped
+    
+    ports:
+      - "80:80"
+      - "443:443"
+      #- "8080:8080" # Für das insecure Dashboard
+      
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./config/traefik.yml:/etc/traefik/traefik.yml:ro
+      #- ./config/conf:/etc/traefik/conf
+      - ./config/certs:/etc/traefik/certs/:rw
+      
+    environment:
+      # Stellt den Token aus der .env-Datei für den dnsChallenge bereit
+      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
+      
+    networks:
+      - frontend # Traefik ist das einzige Mitglied im Frontend-Netzwerk
+      #- backend  # Traefik ist auch im Backend, um mit anderen Diensten zu sprechen
+
+    labels:
+      - "traefik.enable=true"
+      # http to https redirection can be handled by traefik globally, so no need here
+      #- "traefik.http.routers.traefik-http.entrypoints=web"
+      #- "traefik.http.routers.traefik-http.rule=Host(`traefik.home.decebu.com`)"
+      - "traefik.http.routers.traefik-https.entrypoints=websecure"
+      - "traefik.http.routers.traefik-https.rule=Host(`traefik.home.decebu.com`)"
+      - "traefik.http.routers.traefik-https.tls=true"
+      - "traefik.http.routers.traefik-https.tls.certresolver=cloudflare"
+      - "traefik.http.routers.traefik-https.service=api@internal"
+
+networks:
+  frontend:
+    external: true

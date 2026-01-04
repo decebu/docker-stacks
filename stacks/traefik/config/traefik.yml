@@ -1,0 +1,44 @@
+# ~/docker-stacks/stacks/traefik/traefik.yml
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+log:
+  level: DEBUG # INFO ist besser für die erste Inbetriebnahme
+
+api:
+  dashboard: true
+  insecure: true # Einfacher Zugriff auf das Dashboard über Port 8080
+
+entryPoints:
+  web:
+    address: :80
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+  websecure:
+    address: :443
+
+certificatesResolvers:
+  cloudflare:
+    acme:
+      email: "server@decebu.com"
+      storage: /etc/traefik/certs/cloudflare-acme.json
+      caServer: 'https://acme-v02.api.letsencrypt.org/directory'
+      keyType: EC256
+      dnsChallenge:
+        provider: cloudflare
+        resolvers:
+          - "1.1.1.1:53"
+          - "8.8.8.8:53"
+
+providers:
+  docker:
+    exposedByDefault: false
+    endpoint: 'unix:///var/run/docker.sock'
+#     watch: true
+#   file:
+#     directory: /etc/traefik/conf/
+#     watch: true
