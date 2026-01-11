@@ -1,0 +1,35 @@
+ services:
+  wireguard:
+    image: linuxserver/wireguard
+    container_name: fleet-wg-client
+    ports:
+      - "8080:8080"
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ./wg-client:/config
+      - /lib/modules:/lib/modules
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    restart: unless-stopped
+
+  kestra:
+    image: kestra/kestra:latest-full # Enthält bereits viele Plugins wie Ansible
+    container_name: fleet-kestra
+    restart: unless-stopped
+    depends_on:
+      - wireguard
+    volumes:
+      - ./kestra:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    group_add:
+      - 984 
+# DIES IST DER ENTSCHEIDENDE PUNKT:
+    network_mode: "service:wireguard"
+    command: server local
+    env_file:
+      - .env_encoded

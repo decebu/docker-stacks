@@ -22,6 +22,13 @@ w*.bak
 *.swp
 *.swo
 
+# Datenbanken & Backup-Dateien
+*.db
+*.bak
+
+# Temporäre Dateien
+.DS_Store
+
 # Docker-Volumen und persistent gespeicherte Daten
 /docker-compose.override.yml
 #/stacks/*/config/
@@ -48,3 +55,7 @@ docker-compose.yml.override
 /stacks/unbound/config/ca-certificates.crt
 /stacks/unbound/config/dev/
 /stacks/unbound/config/var/
+
+# fleet-manager Laufzeit files und Secrets
+**/wg_confs/*.conf
+**/wg-client/wg_confs/*

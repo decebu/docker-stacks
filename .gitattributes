@@ -1,0 +1,10 @@
+# Verschlüssele alle .env Dateien in allen Unterordnern
+**/*.env filter=git-crypt diff=git-crypt
+**/*.env_encoded filter=git-crypt diff=git-crypt
+
+# Falls du Zertifikate hast, die verschlüsselt ins Repo sollen (optional)
+ **/*.crt filter=git-crypt diff=git-crypt
+ **/*.key filter=git-crypt diff=git-crypt
+
+# Ansible inventory.ini Files
+**/inventory_*.ini filter=git-crypt diff=git-crypt
