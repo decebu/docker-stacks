@@ -1,0 +1,62 @@
+networks:
+  caddy_caddynet:
+    external: true 
+
+services:
+  # ---------------------------------------------------------
+  # UPTIME KUMA - Monitoring Dashboard ("The Witness")
+  # Zugriff: http://10.10.10.1:3001 (Nur via VPN erreichbar!)
+  # ---------------------------------------------------------
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    restart: unless-stopped
+    volumes:
+      - ./kuma_data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      # WICHTIG: Bindet nur an die VPN IP. Von außen unsichtbar.
+      - "10.10.10.1:3001:3001"
+
+  # ---------------------------------------------------------
+  # NTFY - Unified Push Server
+  # Zugriff: http://<VPS_PUBLIC_IP>:8089 (Öffentlich für Push)
+  # ---------------------------------------------------------
+  ntfy:
+    image: binwiederhier/ntfy
+    container_name: ntfy
+    restart: unless-stopped
+    command:
+      - serve
+      - --cache-file=/var/cache/ntfy/cache.db
+      # Base URL ist wichtig für iOS Anhänge (Bilder)
+      # Ersetze <DEINE_IP> später idealerweise durch eine Domain
+      - --base-url=https://notify.server.decebu.com
+      # Auth: Wir erlauben erst mal Read-Write zum Testen.
+      # Später auf 'deny-all' stellen für Sicherheit!
+      - --auth-default-access=deny-all
+      - --enable-login=true
+      #- --listen-http :9090
+    environment:
+      - NTFY_BASE_URL=https://notify.server.decebu.com
+      - NTFY_AUTH_FILE=/etc/ntfy/user.db
+      - NTFY_AUTH_DEFAULT_ACCESS=deny-all
+    volumes:
+      - ./ntfy_data:/var/cache/ntfy
+      - ./ntfy_user.db:/etc/ntfy/user.db
+    networks:
+      - caddy_caddynet
+
+  # ---------------------------------------------------------
+  # DOZZLE - Log Viewer
+  # Zugriff: http://10.10.10.1:8888 (Nur via VPN erreichbar!)
+  # ---------------------------------------------------------
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      # WICHTIG: Bindet nur an die VPN IP.
+      - "10.10.10.1:8888:8080"
