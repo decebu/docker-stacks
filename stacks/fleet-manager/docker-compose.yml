@@ -4,6 +4,8 @@
     container_name: fleet-wg-client
     ports:
       - "8080:8080"
+    dns:
+      - 192.168.70.3
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
