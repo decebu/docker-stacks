@@ -59,3 +59,4 @@ docker-compose.yml.override
 # fleet-manager Laufzeit files und Secrets
 **/wg_confs/*.conf
 **/wg-client/wg_confs/*
+**/kuma_data/kuma.db*

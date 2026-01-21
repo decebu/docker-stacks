@@ -1,4 +1,5 @@
 networks:
+  monitoring-internal:
   caddy_caddynet:
     external: true 
 
@@ -13,11 +14,12 @@ services:
     restart: unless-stopped
     volumes:
       - ./kuma_data:/app/data
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
       # WICHTIG: Bindet nur an die VPN IP. Von außen unsichtbar.
       - "10.10.10.1:3001:3001"
-
+    networks:
+      - monitoring-internal
   # ---------------------------------------------------------
   # NTFY - Unified Push Server
   # Zugriff: http://<VPS_PUBLIC_IP>:8089 (Öffentlich für Push)
@@ -41,11 +43,13 @@ services:
       - NTFY_BASE_URL=https://notify.server.decebu.com
       - NTFY_AUTH_FILE=/etc/ntfy/user.db
       - NTFY_AUTH_DEFAULT_ACCESS=deny-all
+      - NTFY_UPSTREAM_BASE_URL=https://ntfy.sh
     volumes:
       - ./ntfy_data:/var/cache/ntfy
       - ./ntfy_user.db:/etc/ntfy/user.db
     networks:
       - caddy_caddynet
+      - monitoring-internal
 
   # ---------------------------------------------------------
   # DOZZLE - Log Viewer
@@ -57,6 +61,28 @@ services:
     restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    # Port 8080 nur öffnen, wenn du über VPN (10.10.10.1:8080) zugreifen willst
     ports:
-      # WICHTIG: Bindet nur an die VPN IP.
       - "10.10.10.1:8888:8080"
+    networks:
+      - monitoring-internal
+
+
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /etc/localtime:/etc/localtime:ro # WICHTIG: Damit 4 Uhr auch DEINE 4 Uhr ist (Zeitzone)
+    environment:
+      - DOCKER_API_VERSION=1.45
+      - WATCHTOWER_CLEANUP=true
+      # Statt Intervall nutzen wir CRON (Sekunde Minute Stunde Tag Monat Wochentag)
+      # Hier: Täglich um 04:00:00 Uhr morgens
+      - WATCHTOWER_SCHEDULE=0 0 4 * * *
+      - WATCHTOWER_INCLUDE_STOPPED=true
+      - WATCHTOWER_NOTIFICATIONS=shoutrrr
+      - WATCHTOWER_NOTIFICATION_URL=${WATCHTOWER_NTFY_URL}
+    networks:
+      - monitoring-internal
