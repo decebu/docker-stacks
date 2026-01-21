@@ -1,6 +1,6 @@
 networks:
   monitoring-internal:
-  caddy_caddynet:
+  frontend:
     external: true 
 
 services:
@@ -48,8 +48,15 @@ services:
       - ./ntfy_data:/var/cache/ntfy
       - ./ntfy_user.db:/etc/ntfy/user.db
     networks:
-      - caddy_caddynet
+      - frontend
       - monitoring-internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ntfy.rule=Host(`notify.server.decebu.com`)"
+      - "traefik.http.routers.ntfy.entrypoints=websecure"
+      - "traefik.http.routers.ntfy.tls.certresolver=cloudflare"
+      - "traefik.http.services.ntfy.loadbalancer.server.port=80" # Interner ntfy Port
+      - "traefik.docker.network=frontend"
 
   # ---------------------------------------------------------
   # DOZZLE - Log Viewer

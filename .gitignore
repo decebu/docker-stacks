@@ -60,3 +60,21 @@ docker-compose.yml.override
 **/wg_confs/*.conf
 **/wg-client/wg_confs/*
 **/kuma_data/kuma.db*
+
+# Docker Daten-Verzeichnisse ignorieren
+**/data/
+**/db/
+**/certs/
+**/kuma_data/
+
+# Spezifische Datenbank-Files (falls sie außerhalb von /db liegen)
+*.db
+*.db-shm
+*.db-wal
+
+# ACME / SSL Zertifikate
+acme.json
+cloudflare-acme.json
+
+# Keys und Secrets (Vorsicht!)
+**/private_key
