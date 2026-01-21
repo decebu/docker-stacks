@@ -12,7 +12,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./config/traefik.yml:/etc/traefik/traefik.yml:ro
-      #- ./config/conf:/etc/traefik/conf
+      - ./config/conf:/etc/traefik/conf
       - ./config/certs:/etc/traefik/certs/:rw
       
     environment:
@@ -33,6 +33,7 @@ services:
       - "traefik.http.routers.traefik-https.tls=true"
       - "traefik.http.routers.traefik-https.tls.certresolver=cloudflare"
       - "traefik.http.routers.traefik-https.service=api@internal"
+      - "traefik.http.routers.traefik-https.middlewares=authentik@file"
 
 networks:
   frontend:
