@@ -1,7 +1,10 @@
 networks:
   monitoring-internal:
   frontend:
-    external: true 
+    external: true
+  socket-net:
+    external: true
+    name: traefik_socket-net 
 
 services:
   # ---------------------------------------------------------
@@ -14,12 +17,13 @@ services:
     restart: unless-stopped
     volumes:
       - ./kuma_data:/app/data
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+    #  - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
       # WICHTIG: Bindet nur an die VPN IP. Von außen unsichtbar.
       - "10.10.10.1:3001:3001"
     networks:
       - monitoring-internal
+      - socket-net
   # ---------------------------------------------------------
   # NTFY - Unified Push Server
   # Zugriff: http://<VPS_PUBLIC_IP>:8089 (Öffentlich für Push)
@@ -66,14 +70,18 @@ services:
     image: amir20/dozzle:latest
     container_name: dozzle
     restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+    # volumes:
+      #- /var/run/docker.sock:/var/run/docker.sock
+    environment:  
+      - DOZZLE_REMOTE_HOST=tcp://socket-proxy:2375 
+      - DOZZLE_FILTER=
+      - DOZZLE_NO_ANALYTICS=true
     # Port 8080 nur öffnen, wenn du über VPN (10.10.10.1:8080) zugreifen willst
     ports:
       - "10.10.10.1:8888:8080"
     networks:
       - monitoring-internal
-
+      - socket-net
 
   watchtower:
     image: containrrr/watchtower

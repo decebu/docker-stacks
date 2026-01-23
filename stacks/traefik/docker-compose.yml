@@ -10,6 +10,10 @@ services:
       - NETWORKS=1   # Traefik muss Netzwerke sehen
       - SERVICES=1   # Für Swarm-Mode (optional, schadet nicht)
       - TASKS=1
+      - LOGS=1
+      - NODES=1
+      - LIST_CONTAINERS=1
+      - INFO=1
     networks:
       - socket-net
 
