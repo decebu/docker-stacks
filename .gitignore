@@ -34,6 +34,9 @@ w*.bak
 #/stacks/*/config/
 /stacks/*/.env
 
+#Verschlüsselte .env Dateien explizit wieder rein
+!stacks/fleet-client-ha/.env
+
 # IDE und Editor spezifische Dateien
 .vscode/
 .idea/

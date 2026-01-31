@@ -22,3 +22,20 @@ services:
     ports:
       - "8443:8080"
     restart: unless-stopped
+
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - DOCKER_API_VERSION=1.45
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_MONITOR_ONLY=true
+      - WATCHTOWER_SCHEDULE=0 0 4 * * *
+      - WATCHTOWER_INCLUDE_STOPPED=true
+      - WATCHTOWER_NOTIFICATIONS=shoutrrr
+      # Die URL wird jetzt aus den Variablen zusammengebaut
+      - WATCHTOWER_NOTIFICATION_URL=generic+https://${NTFY_USER}:${NTFY_PASS}@${NTFY_SERVER_IP}/${NTFY_TOPIC}
