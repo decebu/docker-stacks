@@ -1,0 +1,24 @@
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: "ghcr.io/home-assistant/home-assistant:stable"
+    volumes:
+      # Wir mappen den Pfad aus der .env Datei
+      - ${CUSTOMER_CONF_DIR}:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /run/dbus:/run/dbus:ro
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+
+  vscode:
+    image: codercom/code-server:latest
+    container_name: ha_vscode
+    volumes:
+      # VSCode schaut direkt in den Config-Ordner des Kunden
+      - ${CUSTOMER_CONF_DIR}:/home/coder/project
+    environment:
+      - PASSWORD=${VSCODE_PASSWORD}
+    ports:
+      - "8443:8080"
+    restart: unless-stopped
