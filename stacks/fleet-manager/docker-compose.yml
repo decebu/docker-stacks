@@ -28,10 +28,24 @@
     volumes:
       - ./kestra:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
+      - /var/backup/fleet_backups:/var/backup/fleet_backups
+      - ./application.yaml:/etc/config/application.yaml
     group_add:
       - 984 
-# DIES IST DER ENTSCHEIDENDE PUNKT:
     network_mode: "service:wireguard"
-    command: server local
+    command: server local --config /etc/config/application.yaml
     env_file:
       - .env_encoded
+
+  rsync-server:
+    image: instrumentisto/rsync-ssh
+    container_name: fleet-rsync-server
+    restart: unless-stopped
+    ports:
+      - "873:873"
+    volumes:
+      - /var/backup:/data:ro
+      - ./rsyncd.conf:/etc/rsyncd.conf:ro
+      - ./rsyncd.secrets:/etc/rsyncd.secrets:ro
+    # Der entscheidende Befehl:
+    command: rsync --daemon --no-detach --config=/etc/rsyncd.conf
