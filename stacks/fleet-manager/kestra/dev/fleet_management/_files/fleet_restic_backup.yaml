@@ -1,0 +1,67 @@
+---
+- name: Universal Fleet Restic Backup
+  hosts: fleet
+  become: true
+  ignore_unreachable: true
+  any_errors_fatal: false
+  
+  vars:
+    restic_pw_file: "/root/.restic_pw"
+    restic_repo: "/var/backup/restic-repo"
+
+  tasks:
+    # 1. INSTALLATION & VORBEREITUNG
+    - name: Ensure Restic is installed
+      ansible.builtin.package:
+        name: restic
+        state: present
+
+    - name: Check for local password file
+      ansible.builtin.stat:
+        path: "{{ restic_pw_file }}"
+      register: pw_file_check
+
+    - name: Fail if password file is missing
+      ansible.builtin.fail:
+        msg: "Die Datei {{ restic_pw_file }} fehlt auf diesem Host!"
+      when: not pw_file_check.stat.exists
+
+    - name: Check if Restic repo is initialized
+      ansible.builtin.stat:
+        path: "{{ restic_repo }}/config"
+      register: repo_check
+
+    - name: Initialize Restic repository
+      ansible.builtin.shell: "restic -r {{ restic_repo }} --password-file {{ restic_pw_file }} init"
+      when: not repo_check.stat.exists
+
+    # 2. BACKUP LOGIK: VPS / POSTGRES
+    - name: Backup Firezone Database (VPS only)
+      ansible.builtin.shell: >
+        docker exec {{ pg_container }} pg_dumpall -U postgres | 
+        restic -r {{ restic_repo }} --password-file {{ restic_pw_file }} 
+        backup --stdin --stdin-filename firezone_db.sql
+      when: is_vps | bool
+      register: pg_backup_res
+      ignore_errors: yes
+
+    # 3. BACKUP LOGIK: GEMEINSAME PFADE (Stacks, WG, HA)
+    - name: Run Restic Backup for defined paths
+      ansible.builtin.shell: "restic -r {{ restic_repo }} --password-file {{ restic_pw_file }} backup {{ backup_paths }}"
+      register: path_backup_res
+
+    # 4. VALIDIERUNG & RETENTION
+    - name: Verify Restic repository integrity
+      ansible.builtin.shell: "restic -r {{ restic_repo }} --password-file {{ restic_pw_file }} check"
+      register: restic_check_res
+
+    - name: Cleanup old Snapshots
+      ansible.builtin.shell: "restic -r {{ restic_repo }} --password-file {{ restic_pw_file }} forget --keep-daily 7 --keep-weekly 4 --prune"
+
+    # 5. KESTRA EXPORT: Hier werden die Daten für den ntfy-Task bereitgestellt
+    - name: Export results to Kestra vars
+      ansible.builtin.debug:
+        msg:
+          host: "{{ inventory_hostname }}"
+          paths_status: "{{ path_backup_res.rc == 0 | bool }}"
+          check_status: "{{ restic_check_res.rc == 0 | bool }}"

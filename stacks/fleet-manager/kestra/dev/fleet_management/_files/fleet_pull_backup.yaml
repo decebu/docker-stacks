@@ -1,0 +1,30 @@
+- name: Pull Restic Repos to Fleet-Manager
+  hosts: fleet
+  become: true
+  gather_facts: false # Beschleunigt den Start, da wir nur rsyncen
+  
+  tasks:
+    - name: Ensure local destination directory exists on Fleet-Mgr
+      ansible.builtin.file:
+        path: "/var/backup/fleet_backups/{{ inventory_hostname }}"
+        state: directory
+        mode: '0755'
+      delegate_to: localhost
+
+    - name: Pull Restic Repository via Rsync
+      ansible.posix.synchronize:
+        mode: pull
+        src: "/var/backup/restic-repo/"
+        dest: "/var/backup/fleet_backups/{{ inventory_hostname }}/"
+        rsync_opts:
+          - "--no-owner"
+          - "--no-group"
+          - "--delete"
+          - "--archive"
+          - "--stats"
+          - "--human-readable"
+      register: sync_result
+
+    - name: Report Sync Status
+      ansible.builtin.debug:
+        msg: "Sync für {{ inventory_hostname }} abgeschlossen. Status: {{ sync_result.msg if sync_result.failed else 'Erfolgreich' }}"

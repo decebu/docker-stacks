@@ -1,0 +1,28 @@
+- name: Fleet OS Security Updates
+  hosts: fleet
+  ignore_unreachable: true
+  any_errors_fatal: false
+
+  tasks:
+    - name: Update apt cache and upgrade all packages
+      ansible.builtin.apt:
+        update_cache: yes
+        upgrade: dist
+        autoremove: yes
+        autoclean: yes
+      register: apt_result
+
+    - name: Check if reboot is required
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: reboot_required_file
+
+    - name: Export result to Kestra
+      ansible.builtin.debug:
+        msg:
+          host: "{{ inventory_hostname }}"
+          status: "Updated"
+          # Wir prüfen erst, ob stat existiert, sonst 'unknown'
+          reboot_needed: "{{ reboot_required_file.stat.exists if reboot_required_file.stat is defined else 'unknown' }}"
+      # WICHTIG: Nur ausführen, wenn der Host erreichbar war
+      when: ansible_facts is defined
